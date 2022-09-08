@@ -16,32 +16,32 @@ struct ContentView: View {
      1. Inspector -> Add modifier
      */
     
-//    var emojis = ["🚕", "🚌","🚌", "🚜", "🛵"] // cause it not distinc so got double click
+    //    var emojis = ["🚕", "🚌","🚌", "🚜", "🛵"] // cause it not distinc so got double click
     var emojis = ["🚕", "🚌", "🚜", "🛵", "🚙", "🚎", "🛻", "🏎", "🚗", "🚘", "🏍", "🚆", "🚡", "✈️", "🚁", "🛺", "⛵️", "🚤", "🛥", "🛰"]
-    @State var emojiCount = 8
+    @State var emojiCount = 20
     
     var body: some View {
         VStack {
             ScrollView {
                 /*
-                 Lazy meaning accessing var body when need 
+                 Lazy meaning accessing var body when need
                  */
-                LazyVGrid(columns: [GridItem(), GridItem(), GridItem()]) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 65))]) {
                     ForEach(emojis[0..<emojiCount], id: \.self, content: { emoji in
                         CardView(content: emoji).aspectRatio(2/3, contentMode: .fit)
                     })
                 }
             }
             .foregroundColor(.red)
-            Spacer()
-            HStack {
-                addButton
-                Spacer()
-                removeButton
-            }
-            .font(.largeTitle)
-            .padding(.horizontal)
-        
+            //            Spacer()
+            //            HStack {
+            //                addButton
+            //                Spacer()
+            //                removeButton
+            //            }
+            //            .font(.largeTitle)
+            //            .padding(.horizontal)
+            
         }
         .padding()
         
@@ -71,7 +71,7 @@ struct ContentView: View {
  */
 struct CardView: View {
     var content: String
-//    var isFaceUp: Bool = true //{ return false }
+    //    var isFaceUp: Bool = true //{ return false }
     @State var isFaceUp: Bool = true // @State is the pointer, point to outside this view
     
     var body: some View {
@@ -79,10 +79,11 @@ struct CardView: View {
         
         ZStack(content: {
             if isFaceUp {
-            shape.fill(.white)
-            shape.stroke(lineWidth: 3)
-            Text(content)
-                .font(.largeTitle)
+//                shape.fill(.white)
+                shape.fill().foregroundColor(.red)
+                shape.strokeBorder(lineWidth: 3)
+                Text(content)
+                    .font(.largeTitle)
             } else {
                 shape.fill(.red)
             }
