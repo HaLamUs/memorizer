@@ -11,7 +11,7 @@ import Foundation
 //    return "🛰"
 //}
 
-class EmojiMemoryGame {
+class EmojiMemoryGame: ObservableObject {
     
     /*
      1.  Its global BUt with scope
@@ -29,8 +29,9 @@ class EmojiMemoryGame {
     /*
      1. VM will create Model
      2. We choose String cause this is Emoji VM
+     3. Published will auto call objectWillChange for us 
      */
-    private var model: MemoryGame<String> =
+    @Published private var model: MemoryGame<String> =
 //    MemoryGame<String>(numberOfPairsOfCards: 4, createCardContent: makeCardContent)
 //    MemoryGame<String>(numberOfPairsOfCards: 4, createCardContent: {(index: Int) -> String in
 //        return "🛰"
@@ -43,6 +44,12 @@ class EmojiMemoryGame {
     
     var cards: Array<MemoryGame<String>.Card> {
         // this way READONly 
-        return model.cards
+        model.cards
+    }
+    
+    //MARK: - Intents
+    func choose(_ card: MemoryGame<String>.Card) {
+//        objectWillChange.send() // we can use this to notify
+        model.choose(card)
     }
 }

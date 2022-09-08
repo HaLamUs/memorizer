@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct MemorizerApp: App {
+    /*
+     Only the pointer is let, the one it point is NOT
+     */
+    let game = EmojiMemoryGame()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(viewModel: game)
         }
     }
 }

@@ -17,8 +17,7 @@ struct ContentView: View {
      */
     
     //    var emojis = ["🚕", "🚌","🚌", "🚜", "🛵"] // cause it not distinc so got double click
-    var emojis = ["🚕", "🚌", "🚜", "🛵", "🚙", "🚎", "🛻", "🏎", "🚗", "🚘", "🏍", "🚆", "🚡", "✈️", "🚁", "🛺", "⛵️", "🚤", "🛥", "🛰"]
-    @State var emojiCount = 20
+    @ObservedObject var viewModel: EmojiMemoryGame
     
     var body: some View {
         VStack {
@@ -26,21 +25,17 @@ struct ContentView: View {
                 /*
                  Lazy meaning accessing var body when need
                  */
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 65))]) {
-                    ForEach(emojis[0..<emojiCount], id: \.self, content: { emoji in
-                        CardView(content: emoji).aspectRatio(2/3, contentMode: .fit)
-                    })
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
+                    ForEach(viewModel.cards) { card in
+                        CardView(card: card)
+                            .aspectRatio(2/3, contentMode: .fit)
+                            .onTapGesture {
+                                viewModel.choose(card)
+                            }
+                    }
                 }
             }
             .foregroundColor(.red)
-            //            Spacer()
-            //            HStack {
-            //                addButton
-            //                Spacer()
-            //                removeButton
-            //            }
-            //            .font(.largeTitle)
-            //            .padding(.horizontal)
             
         }
         .padding()
@@ -48,21 +43,15 @@ struct ContentView: View {
     }
     
     // When it so simple we dont want create NEW struct for it
-    var addButton: some View {
-        Button(action: {
-            emojiCount += 1
-        }, label: {
-            Image(systemName: "plus.circle")
-        })
-    }
+    //    var addButton: some View {
+    //        Button(action: {
+    //            emojiCount += 1
+    //        }, label: {
+    //            Image(systemName: "plus.circle")
+    //        })
+    //    }
     
-    var removeButton: some View {
-        Button(action: {
-            emojiCount -= 1
-        }, label: {
-            Image(systemName: "minus.circle")
-        })
-    }
+    
     
 }
 
@@ -70,27 +59,25 @@ struct ContentView: View {
  Remember: View is immutable, it will rebuild every time
  */
 struct CardView: View {
-    var content: String
-    //    var isFaceUp: Bool = true //{ return false }
-    @State var isFaceUp: Bool = true // @State is the pointer, point to outside this view
+    //    @State var isFaceUp: Bool = true // @State is the pointer, point to outside this view
+    
+    let card: MemoryGame<String>.Card // we want view using let
     
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 20)
         
         ZStack(content: {
-            if isFaceUp {
-//                shape.fill(.white)
-                shape.fill().foregroundColor(.red)
+            if card.isFaceUp {
                 shape.strokeBorder(lineWidth: 3)
-                Text(content)
+                Text(card.content)
                     .font(.largeTitle)
-            } else {
+            } else if card.isMatched {
+                shape.opacity(0)
+            }
+            else {
                 shape.fill(.red)
             }
         })
-            .onTapGesture {
-                isFaceUp = !isFaceUp
-            }
     }
 }
 
