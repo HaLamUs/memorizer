@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  EmojiMemoruGameView.swift
 //  Memorizer
 //
 //  Created by lamha on 07/09/2022.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct EmojiMemoruGameView: View {
     /*
      variable name body has type 'some View' determine as RunTime
      Like sub Lego (some View) inside the Lego (View)
@@ -17,7 +17,7 @@ struct ContentView: View {
      */
     
     //    var emojis = ["🚕", "🚌","🚌", "🚜", "🛵"] // cause it not distinc so got double click
-    @ObservedObject var viewModel: EmojiMemoryGame
+    @ObservedObject var game: EmojiMemoryGame
     
     var body: some View {
         VStack {
@@ -26,11 +26,11 @@ struct ContentView: View {
                  Lazy meaning accessing var body when need
                  */
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
-                    ForEach(viewModel.cards) { card in
+                    ForEach(game.cards) { card in
                         CardView(card: card)
                             .aspectRatio(2/3, contentMode: .fit)
                             .onTapGesture {
-                                viewModel.choose(card)
+                                game.choose(card)
                             }
                     }
                 }
@@ -64,20 +64,32 @@ struct CardView: View {
     let card: MemoryGame<String>.Card // we want view using let
     
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 20)
-        
-        ZStack(content: {
-            if card.isFaceUp {
-                shape.strokeBorder(lineWidth: 3)
-                Text(card.content)
-                    .font(.largeTitle)
-            } else if card.isMatched {
-                shape.opacity(0)
-            }
-            else {
-                shape.fill(.red)
-            }
+        GeometryReader(content:  { geometry in
+            let shape = RoundedRectangle(cornerRadius: DrawingConstants.cornerRadius)
+            ZStack(content: {
+                if card.isFaceUp {
+                    shape.strokeBorder(lineWidth: DrawingConstants.lineWidth)
+                    Text(card.content).font(font(in: geometry.size))
+                } else if card.isMatched {
+                    shape.opacity(0)
+                }
+                else {
+                    shape.fill(.red)
+                }
+            })
         })
+        
+    }
+    
+    private func font(in size: CGSize) -> Font {
+        Font.system(size: min(size.width, size.height) * DrawingConstants.fontScale)
+    }
+    
+    // we dont want magic number hanging around
+    private struct DrawingConstants {
+        static let cornerRadius: CGFloat = 20
+        static let lineWidth: CGFloat = 3
+        static let fontScale: CGFloat = 0.8
     }
 }
 

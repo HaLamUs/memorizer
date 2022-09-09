@@ -8,17 +8,56 @@
 import Foundation
 
 /*
-    CardContent is dont care type BUT it must behave like like Equatable
+ CardContent is dont care type BUT it must behave like like Equatable
  */
 struct MemoryGame<CardContent> where CardContent: Equatable {
-    private(set) var cards: Array<Card>
+    private(set) var cards: Array<Card> // (1)
     
-    private var thePreviousOne: Int?
+    //    private var thePreviousOne: Int? // (2)
+    
+    /*
+     Potential bug
+     (1) có thể chứa thằng đc chọn
+     (2) chứa index thằng đc chọn
+     Lỡ code sai ko sync thì có vấn đề
+     Fix: dùng computed
+     */
+    private var thePreviousOne: Int? {
+        get {
+//            var faceUpCardIndices = [Int]()
+//            for index in cards.indices {
+//                if cards[index].isFaceUp {
+//                    faceUpCardIndices.append(index)
+//                }
+//            }
+//            if faceUpCardIndices.count == 1 {
+//                return faceUpCardIndices.first
+//            }
+//            return nil
+            
+//            var faceUpCardIndices = cards.indices.filter({ index in cards[index].isFaceUp })
+//            var faceUpCardIndices = cards.indices.filter({ cards[$0].isFaceUp })
+//            return faceUpCardIndices.oneAndOnly
+            cards.indices.filter { cards[$0].isFaceUp }.oneAndOnly
+            
+        }
+        set {
+//            for index in cards.indices {
+//                if index != newValue {
+//                    cards[index].isFaceUp = false
+//                } else {
+//                    cards[index].isFaceUp = true
+//                }
+//            }
+            cards.indices.forEach { cards[$0].isFaceUp = ($0 == newValue) }
+        }
+        
+    }
     
     mutating func choose(_ card: Card) {
         //        if let chosenIndex = index(of: card) {
         if let chosenIndex = cards.firstIndex(where: { $0.id == card.id }), !cards[chosenIndex].isFaceUp,
-            !cards[chosenIndex].isMatched {
+           !cards[chosenIndex].isMatched {
             /*
              1. theOne mean the previous
              2. chosenIndex mean the current
@@ -29,20 +68,16 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
                     cards[thePrevious].isMatched = true
                     cards[chosenIndex].isMatched = true
                 }
-                thePreviousOne = nil
+                cards[chosenIndex].isFaceUp = true // we want face it up
             } else {
                 /*
                  3 steps
-                 1. Face down all
+                 1. Face down all --> check the set 
                  2. Keep the current
                  3. store the current
                  */
-                for index in cards.indices {
-                    cards[index].isFaceUp = false
-                }
                 thePreviousOne = chosenIndex
             }
-            cards[chosenIndex].isFaceUp.toggle()
         }
     }
     
@@ -74,7 +109,16 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
         /*
          why genetic cause we think we can do better version
          */
-        var content: CardContent
-        var id: Int
+        let content: CardContent
+        let id: Int // dont allow change after created
+    }
+}
+
+extension Array {
+    var oneAndOnly: Element? { // cmd + click to see Dont care type
+        if count == 1 {
+            return self.first
+        }
+        return nil
     }
 }

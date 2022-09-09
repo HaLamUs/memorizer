@@ -13,13 +13,15 @@ import Foundation
 
 class EmojiMemoryGame: ObservableObject {
     
+    typealias Card = MemoryGame<String>.Card
+    
     /*
      1.  Its global BUt with scope
      2. Static belong to type NOT instance 
      */
-    static let emojis = ["🚕", "🚌", "🚜", "🛵", "🚙", "🚎", "🛻", "🏎", "🚗", "🚘", "🏍", "🚆", "🚡", "✈️", "🚁", "🛺", "⛵️", "🚤", "🛥", "🛰"]
+    private static let emojis = ["🚕", "🚌", "🚜", "🛵", "🚙", "🚎", "🛻", "🏎", "🚗", "🚘", "🏍", "🚆", "🚡", "✈️", "🚁", "🛺", "⛵️", "🚤", "🛥", "🛰"]
     
-    static func createMemoryGame() -> MemoryGame<String> {
+    private static func createMemoryGame() -> MemoryGame<String> {
         MemoryGame<String>(numberOfPairsOfCards: 4) {
             pairIndex in
             EmojiMemoryGame.emojis[pairIndex]
@@ -31,7 +33,7 @@ class EmojiMemoryGame: ObservableObject {
      2. We choose String cause this is Emoji VM
      3. Published will auto call objectWillChange for us 
      */
-    @Published private var model: MemoryGame<String> =
+    @Published private var model =
 //    MemoryGame<String>(numberOfPairsOfCards: 4, createCardContent: makeCardContent)
 //    MemoryGame<String>(numberOfPairsOfCards: 4, createCardContent: {(index: Int) -> String in
 //        return "🛰"
@@ -42,13 +44,13 @@ class EmojiMemoryGame: ObservableObject {
 //    }
     createMemoryGame()
     
-    var cards: Array<MemoryGame<String>.Card> {
+    var cards: Array<Card> {
         // this way READONly 
         model.cards
     }
     
     //MARK: - Intents
-    func choose(_ card: MemoryGame<String>.Card) {
+    func choose(_ card: Card) {
 //        objectWillChange.send() // we can use this to notify
         model.choose(card)
     }
