@@ -19,27 +19,27 @@ struct EmojiMemoruGameView: View {
     //    var emojis = ["🚕", "🚌","🚌", "🚜", "🛵"] // cause it not distinc so got double click
     @ObservedObject var game: EmojiMemoryGame
     
-//    var body: some View {
-//        VStack {
-//            ScrollView {
-//                /*
-//                 Lazy meaning accessing var body when need
-//                 */
-//                LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
-//                    ForEach(game.cards) { card in
-//                        CardView(card: card)
-//                            .aspectRatio(2/3, contentMode: .fit)
-//                            .onTapGesture {
-//                                game.choose(card)
-//                            }
-//                    }
-//                }
-//            }
-//            .foregroundColor(.red)
-//
-//        }
-//        .padding()
-//    }
+    //    var body: some View {
+    //        VStack {
+    //            ScrollView {
+    //                /*
+    //                 Lazy meaning accessing var body when need
+    //                 */
+    //                LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
+    //                    ForEach(game.cards) { card in
+    //                        CardView(card: card)
+    //                            .aspectRatio(2/3, contentMode: .fit)
+    //                            .onTapGesture {
+    //                                game.choose(card)
+    //                            }
+    //                    }
+    //                }
+    //            }
+    //            .foregroundColor(.red)
+    //
+    //        }
+    //        .padding()
+    //    }
     
     // To understand protocol we will write ViewCombiner
     var body: some View {
@@ -85,25 +85,30 @@ struct CardView: View {
     let card: MemoryGame<String>.Card // we want view using let
     
     var body: some View {
-        GeometryReader(content:  { geometry in
-            let shape = RoundedRectangle(cornerRadius: DrawingConstants.cornerRadius)
-            ZStack(content: {
-                if card.isFaceUp {
-                    shape.fill().foregroundColor(.white)
-                    shape.strokeBorder(lineWidth: DrawingConstants.lineWidth)
-                    // toạ độ nó ngc
-                    Pie(startAngle: Angle(degrees: 0-90), endAngle: Angle(degrees: 110-90))
-                        .padding(7).opacity(0.5)
-                    Text(card.content).font(font(in: geometry.size))
-                } else if card.isMatched {
-                    shape.opacity(0)
-                }
-                else {
-                    shape.fill(.red)
-                }
-            })
-        })
+        GeometryReader { geometry in
+            ZStack {
+                Pie(startAngle: Angle(degrees: 0-90), endAngle: Angle(degrees: 110-90))
+                    .padding(7).opacity(0.5)
+                // Like this the font not do the anim
+//                Text(card.content)
+//                    .rotationEffect(Angle(degrees: card.isMatched ? 360: 0))
+//                    .animation(.linear(duration: 1).repeatForever(autoreverses: false))
+//                    .font(font(in: geometry.size))
+                // Like this the font not do the anim
+                Text(card.content)
+                    .rotationEffect(Angle(degrees: card.isMatched ? 360: 0))
+                    .animation(.linear(duration: 1).repeatForever(autoreverses: false))
+                    .font(Font.system(size: DrawingConstants.fontSize))
+                    .scaleEffect(scale(thatFit: geometry.size))
+                    
+            }
+            .cardify(isFaceUp: card.isFaceUp)
+        }
         
+    }
+    
+    private func scale(thatFit size: CGSize) -> CGFloat {
+        min(size.width, size.height) / (DrawingConstants.fontSize / DrawingConstants.fontScale)
     }
     
     private func font(in size: CGSize) -> Font {
@@ -112,9 +117,8 @@ struct CardView: View {
     
     // we dont want magic number hanging around
     private struct DrawingConstants {
-        static let cornerRadius: CGFloat = 10
-        static let lineWidth: CGFloat = 3
         static let fontScale: CGFloat = 0.7
+        static let fontSize: CGFloat = 32
     }
 }
 
