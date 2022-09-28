@@ -30,7 +30,7 @@ struct EmojiMemoruGameView: View {
     //                        CardView(card: card)
     //                            .aspectRatio(2/3, contentMode: .fit)
     //                            .onTapGesture {
-    //                                game.choose(card)
+    //                                 game.choose(card)
     //                            }
     //                    }
     //                }
@@ -41,24 +41,129 @@ struct EmojiMemoruGameView: View {
     //        .padding()
     //    }
     
+    @Namespace private var dealingNamespace
+    
     // To understand protocol we will write ViewCombiner
     var body: some View {
+        // Để như thế này xoay ngang nó ko lấy hết view rất chán
+//        VStack{
+//            gameBody
+//            deckBody
+//            HStack {
+//                shuffle
+//                Spacer()
+//                restart
+//            }
+//            .padding(.horizontal)
+//        }
+        /*
+         Use ZStack in case 1 view appear other disappear
+         */
+        ZStack(alignment: .bottom) {
+            VStack{
+                gameBody
+                HStack {
+                    shuffle
+                    Spacer()
+                    restart
+                }
+                .padding(.horizontal)
+            }
+            deckBody
+        }
+        .padding()
+    }
+    
+    
+    var gameBody: some View {
         AspectVGrid(items: game.cards, aspectRatio: 2/3, content: { card in
             cardView(for: card)
         })
-            .foregroundColor(.red)
-            .padding()
+           
+            .foregroundColor(CardConstants.color)
+    }
+    
+    var shuffle: some View {
+        Button("Shuffle") {
+            withAnimation {
+                game.shuffle()
+            }
+        }
+    }
+    
+    var restart: some View {
+        Button("Restart") {
+            withAnimation{
+                deal = []
+                game.restart()
+            }
+        }
+    }
+    
+    var deckBody: some View {
+        ZStack {
+            ForEach(game.cards.filter (isUnDeal)) { card in
+                CardView(card: card)
+                    .matchedGeometryEffect(id: card.id, in: dealingNamespace)
+                    .transition(AnyTransition.asymmetric(insertion: .opacity, removal: .identity))
+                    .zIndex(zIndex(for: card))
+            }
+        }
+        .frame(width: CardConstants.undealWidth, height: CardConstants.undealHeight)
+        .foregroundColor(CardConstants.color)
+        .onTapGesture {
+            // "deal" cards
+            for card in game.cards {
+                withAnimation(dealAnimation(for: card)) {
+                    deal(card)
+                }
+            }
+        }
+    }
+    
+    // State mean tempory we dont need store this in Model
+    @State private var deal = Set<Int>()
+    
+    private func deal(_ card: EmojiMemoryGame.Card) {
+        deal.insert(card.id)
+    }
+    
+    private func isUnDeal(_ card: EmojiMemoryGame.Card) -> Bool {
+        !deal.contains(card.id)
+    }
+    
+    private func dealAnimation(for card: EmojiMemoryGame.Card) -> Animation {
+        var delay = 0.0
+        if let index = game.cards.firstIndex(where: { $0.id == card.id } ) {
+            delay = Double(index) * (CardConstants.totalDealDuration / Double(game.cards.count))
+        }
+        return Animation.easeIn(duration: CardConstants.dealDuration).delay(delay)
+    }
+    
+    private func zIndex(for card: EmojiMemoryGame.Card) -> Double {
+        -Double(game.cards.firstIndex(where: { $0.id == card.id }) ?? 0)
     }
     
     @ViewBuilder
     private func cardView(for card: EmojiMemoryGame.Card) -> some View {
-        if card.isMatched && !card.isFaceUp {
-            Rectangle().opacity(0)
+        if isUnDeal(card) || (card.isMatched && !card.isFaceUp) {
+//            Rectangle().opacity(0)
+            Color.clear
         } else {
             CardView(card: card)
+                .matchedGeometryEffect(id: card.id, in: dealingNamespace)
                 .padding(4)
+//                .transition(AnyTransition.scale.animation(Animation.easeIn(duration: 2))
+                .transition(AnyTransition.asymmetric(insertion: .identity, removal: .opacity))//.animation(Animation.easeIn(duration: 2)))
+                /*
+                    Like above, the anim not working cause the card come along with the container (AspectVGrid)
+                 Fix: onApear
+                 */
+                .zIndex(zIndex(for: card))
                 .onTapGesture {
-                    game.choose(card)
+                    withAnimation() {
+                        game.choose(card)
+                    }
                 }
         }
     }
@@ -72,7 +177,14 @@ struct EmojiMemoruGameView: View {
     //        })
     //    }
     
-    
+    private struct CardConstants {
+        static let color = Color.red
+        static let aspectRatio: CGFloat = 2/3
+        static let dealDuration: Double = 0.5
+        static let totalDealDuration: Double = 2
+        static let undealHeight: CGFloat = 90
+        static let undealWidth: CGFloat = undealHeight * aspectRatio
+    }
     
 }
 
@@ -84,11 +196,27 @@ struct CardView: View {
     
     let card: MemoryGame<String>.Card // we want view using let
     
+    //cause we want it anim continuely BUT it cant anim the future so we are the state
+    @State private var animatedBonusRemaining: Double = 0
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                Pie(startAngle: Angle(degrees: 0-90), endAngle: Angle(degrees: 110-90))
-                    .padding(7).opacity(0.5)
+                Group {
+                    if card.isConsumingBonusTime {
+                        Pie(startAngle: Angle(degrees: 0-90), endAngle: Angle(degrees: (1 - animatedBonusRemaining)*360-90))
+                            .onAppear{
+                                animatedBonusRemaining = card.bonusRemaining
+                                withAnimation(.linear(duration: card.bonusTimeRemaining)) {
+                                    animatedBonusRemaining = 0
+                                }
+                            }
+                    } else {
+                        Pie(startAngle: Angle(degrees: 0-90), endAngle: Angle(degrees: (1 - card.bonusRemaining)*360-90))
+                    }
+                }
+                    .padding(5)
+                    .opacity(0.5)
                 // Like this the font not do the anim
 //                Text(card.content)
 //                    .rotationEffect(Angle(degrees: card.isMatched ? 360: 0))
